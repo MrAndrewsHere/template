@@ -4,7 +4,7 @@ x-app: &x-app
         dockerfile: ./docker/app/Dockerfile
     env_file:
         - .env
-    container_name: app-${APP_NAMESPACE}
+    container_name: ${APP_NAMESPACE}-app
     depends_on:
         - db
         - redis
@@ -24,7 +24,7 @@ services:
 
     scheduler:
         <<: *x-app
-        container_name: scheduler-${APP_NAMESPACE}
+        container_name: ${APP_NAMESPACE}-scheduler
 #        user: "${UID:-1000}:${GID:-1000}"
         command: >
             sh -c "while true; do
@@ -39,7 +39,7 @@ services:
         image: postgres:latest
         env_file:
             - .env
-        container_name: db-${APP_NAMESPACE}
+        container_name: ${APP_NAMESPACE}-db
         environment:
             POSTGRES_DB: ${DB_DATABASE}
             POSTGRES_USER: ${DB_USERNAME}
@@ -49,7 +49,7 @@ services:
 
     redis:
         image: redis:latest
-        container_name: redis-${APP_NAMESPACE}
+        container_name: ${APP_NAMESPACE}-redis
         restart: unless-stopped
         env_file:
             - .env

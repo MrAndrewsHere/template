@@ -29,7 +29,7 @@ docker-compose up -d --build
 ```
 
 ```bash
-docker exec -it app-myapp /bin/bash
+docker exec -it myapp-app /bin/bash
 ```
 ```bash
 composer install
@@ -80,7 +80,7 @@ task check
 или
 
 ```bash
-docker exec -it app-myapp /bin/bash
+docker exec -it myapp-app /bin/bash
 ```
 
 ```bash
