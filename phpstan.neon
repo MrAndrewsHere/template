@@ -1,0 +1,12 @@
+parameters:
+    level: 8
+    paths:
+        - app
+        - config
+    excludePaths:
+        - storage/*
+        - bootstrap/cache/*
+
+    # Для работы с Laravel коллекциями
+    universalObjectCratesClasses:
+        - Illuminate\Support\Collection
