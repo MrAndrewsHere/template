@@ -30,6 +30,8 @@ docker-compose up -d --build
 ```bash
 docker exec -it value-app /bin/bash
 ```
+
+Внутри контейнера:
 ```bash
 composer install
 ```
@@ -49,7 +51,10 @@ php artisan db:seed
 exit
 ```
 ```bash
-docker-compose restart
+docker-compose stop
+```
+```bash
+docker-compose start
 ```
 
 ## Taskfile
