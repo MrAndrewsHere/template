@@ -1,95 +1,299 @@
 # https://taskfile.dev
-
 version: '3'
+dotenv: [ '.env' ]
 
-dotenv: ['.env']
-
+env:
+  CONTAINER: '{{.APP_NAMESPACE}}-app'
+  DOCKER_TTY: '-it'
+  COMPOSE: 'docker-compose'
 
 tasks:
+  # === Внутренние утилитарные задачи (для переиспользования) ===
+  compose:
+    internal: true
+    vars:
+      FILES: '{{.FILES | default ""}}'
+      ARGS: '{{.ARGS | default ""}}'
+    cmds:
+      - $COMPOSE {{.FILES}} {{.ARGS}}
+
+  artisan:
+    internal: true
+    vars:
+      ARGS: '{{.ARGS}}'
+    cmds:
+      - docker exec $DOCKER_TTY $CONTAINER php artisan {{.ARGS}}
+
+  vendor-bin:
+    internal: true
+    vars:
+      BIN: '{{.BIN}}'
+      ARGS: '{{.ARGS | default ""}}'
+    cmds:
+      - docker exec $DOCKER_TTY $CONTAINER {{.BIN}} {{.ARGS}}
+
+  # === Compose / Orchestration ===
+  compose:build:
+    desc: Build и поднятие сервисов
+    cmds:
+      - task: compose
+        vars: { ARGS: 'up -d --build' }
+
+  compose:up:
+    desc: Поднять сервисы
+    cmds:
+      - task: compose
+        vars: { ARGS: 'up -d --remove-orphans' }
+
+  compose:build-prod:
+    desc: Build и поднятие сервисов (prod)
+    cmds:
+      - task: compose
+        vars:
+          FILES: '-f docker-compose.yml -f docker-compose.prod.yml'
+          ARGS: 'up -d --build'
+
+  compose:up-prod:
+    desc: Поднять сервисы (prod)
+    cmds:
+      - task: compose
+        vars:
+          FILES: '-f docker-compose.yml -f docker-compose.prod.yml'
+          ARGS: 'up -d --remove-orphans'
+
+  compose:restart:
+    desc: Рестарт сервисов
+    cmds:
+      - task: compose
+        vars: { ARGS: 'restart' }
+
+  compose:stop:
+    desc: Остановить сервисы
+    cmds:
+      - task: compose
+        vars: { ARGS: 'stop' }
+
+  compose:down:
+    desc: Остановить и удалить сервисы (с данными)
+    cmds:
+      - task: compose
+        vars: { ARGS: 'down -v' }
+
+  # === App / Container ===
+  app:shell:
+    desc: Открыть bash внутри контейнера приложения
+    cmds:
+      - docker exec $DOCKER_TTY $CONTAINER /bin/bash
+
+  app:composer-install:
+    desc: Установка PHP-зависимостей в контейнере
+    cmds:
+      - docker exec $DOCKER_TTY $CONTAINER composer install --no-interaction --prefer-dist --no-progress
+
+  app:key-generate:
+    desc: Генерация APP_KEY
+    cmds:
+      - task: artisan
+        vars: { ARGS: 'key:generate' }
+
+  app:storage-link:
+    desc: Создание storage символической ссылки
+    cmds:
+      - task: artisan
+        vars: { ARGS: 'storage:link' }
+
+  app:cache-clear:
+    desc: Очистка кэша приложения
+    cmds:
+      - task: artisan
+        vars: { ARGS: 'cache:clear' }
+
+  app:horizon-install:
+    desc: Установка Horizon
+    cmds:
+      - task: artisan
+        vars: { ARGS: 'horizon:install' }
+
+  # === Database ===
+  db:migrate:
+    desc: Применить миграции
+    cmds:
+      - task: artisan
+        vars: { ARGS: 'migrate' }
+
+  db:seed:
+    desc: Наполнить БД сидерами
+    cmds:
+      - task: artisan
+        vars: { ARGS: 'db:seed' }
+
+  db:setup:
+    desc: Полная инициализация БД (миграции + сиды)
+    cmds:
+      - task: db:migrate
+      - task: db:seed
+
+  # === Quality / CI ===
+  quality:pint:fix:
+    desc: Авто-правка кода Pint
+    cmds:
+      - task: vendor-bin
+        vars:
+          BIN: 'vendor/bin/pint'
+          ARGS: '--config ./pint.json'
+
+  quality:pint:check:
+    desc: Проверка Pint без правок
+    cmds:
+      - task: vendor-bin
+        vars:
+          BIN: 'vendor/bin/pint'
+          ARGS: '--test --config ./pint.json'
+
+  quality:rector:
+    desc: Прогон Rector
+    cmds:
+      - task: vendor-bin
+        vars:
+          BIN: 'vendor/bin/rector'
+          ARGS: 'process'
+
+  quality:insights:
+    desc: Прогон PHP Insights
+    cmds:
+      - task: vendor-bin
+        vars:
+          BIN: 'vendor/bin/phpinsights'
+          ARGS: '--quiet'
+
+  quality:stan:
+    desc: Прогон PHPStan
+    cmds:
+      - task: vendor-bin
+        vars:
+          BIN: 'vendor/bin/phpstan'
+          ARGS: 'analyse -c ./phpstan.neon'
+
+  quality:test:
+    desc: Запуск тестов
+    cmds:
+      - task: artisan
+        vars: { ARGS: 'test' }
+
+  quality:all:
+    desc: Полная проверка качества кода
+    cmds:
+      - task: quality:pint:check
+      - task: quality:rector
+      - task: quality:insights
+      - task: quality:stan
+      - task: quality:test
+
+  # === Композитные / Сценарные задачи ===
+  init:
+    desc: Полная инициализация проекта
+    cmds:
+      - task: compose:build
+      - task: app:composer-install
+      - task: app:key-generate
+      - task: app:storage-link
+      - task: app:horizon-install
+      - task: db:setup
+      - task: compose:restart
+
+  # === Утилиты ===
   echo:
+    desc: Печать текущих значений окружения
     cmds:
       - echo $APP_NAMESPACE
+      - echo $CONTAINER
+
+  tink:
+    desc: Открыть Tinker (интерактивно)
+    cmds:
+      - docker exec -it $CONTAINER php artisan tink
+
+  # === Совместимость со старыми именами задач (алиасы) ===
   exec:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app /bin/bash
+      - task: app:shell
+
   check:
     cmds:
-      - task: pint-test
-      - task: rector
-      - task: insights
-      - task: stan
-      - task: test
-
-  init:
-    cmds:
-      - task: build
-      - task: composer-install
-      - task: key-generate
-      - task: storage-link
-      - docker exec -it $APP_NAMESPACE-app php artisan horizon:install
-      - task: db-migrate
-      - task: db-seed
-      - task: stop
-      - task: up
+      - task: quality:all
 
   build:
     cmds:
-      - docker-compose up -d --build
+      - task: compose:build
+
   up:
     cmds:
-      - docker-compose up -d --remove-orphans
+      - task: compose:up
+
   build-prod:
     cmds:
-      - docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+      - task: compose:build-prod
+
   up-prod:
     cmds:
-      - docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+      - task: compose:up-prod
+
   restart:
     cmds:
-      - docker-compose restart
+      - task: compose:restart
+
   stop:
     cmds:
-      - docker-compose stop
+      - task: compose:stop
+
   down:
     cmds:
-      - docker-compose down -v
+      - task: compose:down
+
   composer-install:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app composer install
+      - task: app:composer-install
+
   key-generate:
-    - docker exec -it $APP_NAMESPACE-app php artisan key:generate
+    cmds:
+      - task: app:key-generate
+
   storage-link:
-    - docker exec -it $APP_NAMESPACE-app php artisan storage:link
+    cmds:
+      - task: app:storage-link
+
   db-migrate:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app php artisan migrate
+      - task: db:migrate
+
   db-seed:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app php artisan db:seed
+      - task: db:seed
+
   cache-clear:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app php artisan cache:clear
+      - task: app:cache-clear
+
   pint:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app vendor/bin/pint --config ./pint.json
+      - task: quality:pint:fix
+
   pint-test:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app vendor/bin/pint --test --config ./pint.json
+      - task: quality:pint:check
+
   rector:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app vendor/bin/rector process
+      - task: quality:rector
+
   insights:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app vendor/bin/phpinsights --quiet
+      - task: quality:insights
+
   stan:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app vendor/bin/phpstan analyse -c ./phpstan.neon
+      - task: quality:stan
+
   test:
     cmds:
-      - docker exec -it $APP_NAMESPACE-app php artisan test
-  tink:
-    cmds:
-      - docker exec -it $APP_NAMESPACE-app php artisan tink
-
-
-
+      - task: quality:test
