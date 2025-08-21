@@ -12,8 +12,7 @@ cp .env.example .env
 ```
 2. Настройте необходимые переменные в `.env`:
 ```bash
-APP_NAME=app
-APP_NAMESPACE=myapp
+APP_NAMESPACE=value
 ```
 3. Инициализация проекта:
 
@@ -29,7 +28,7 @@ docker-compose up -d --build
 ```
 
 ```bash
-docker exec -it myapp-app /bin/bash
+docker exec -it value-app /bin/bash
 ```
 ```bash
 composer install
@@ -80,7 +79,7 @@ task check
 или
 
 ```bash
-docker exec -it myapp-app /bin/bash
+docker exec -it value-app /bin/bash
 ```
 
 ```bash
