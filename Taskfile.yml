@@ -74,15 +74,15 @@ tasks:
   pint-test:
     cmds:
       - docker exec -it app-$APP_NAMESPACE vendor/bin/pint --test --config ./pint.json
-  stan:
-    cmds:
-      - docker exec -it app-$APP_NAMESPACE vendor/bin/phpstan analyse -c ./phpstan.neon
   rector:
     cmds:
       - docker exec -it app-$APP_NAMESPACE vendor/bin/rector process
   insights:
     cmds:
       - docker exec -it app-$APP_NAMESPACE vendor/bin/phpinsights --quiet
+  stan:
+    cmds:
+      - docker exec -it app-$APP_NAMESPACE vendor/bin/phpstan analyse -c ./phpstan.neon
   test:
     cmds:
       - docker exec -it app-$APP_NAMESPACE php artisan test
