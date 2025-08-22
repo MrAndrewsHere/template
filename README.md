@@ -10,6 +10,9 @@
 ```bash
 cp .env.example .env
 ```
+```bash
+cp .env.testing.example .env.testing
+```
 2. Настройте необходимые переменные в `.env`:
 ```bash
 APP_NAMESPACE=value
@@ -28,7 +31,7 @@ docker-compose up -d --build
 ```
 
 ```bash
-docker exec -it value-app /bin/bash
+docker exec -it value-app /bin/bash # вместо 'value' - значение APP_NAMESPACE из .env
 ```
 
 Внутри контейнера:
@@ -55,6 +58,9 @@ docker-compose stop
 ```
 ```bash
 docker-compose start
+```
+```bash
+php artisan test --env=testing --parallel
 ```
 
 ## Taskfile
@@ -84,7 +90,7 @@ task check
 или
 
 ```bash
-docker exec -it value-app /bin/bash
+docker exec -it value-app /bin/bash # вместо 'value' - значение APP_NAMESPACE из .env
 ```
 
 ```bash
@@ -100,7 +106,7 @@ vendor/bin/phpinsights --quiet
 vendor/bin/phpstan analyse -c ./phpstan.neon
 ```
 ```bash
-php artisan test
+php artisan test --env=testing --parallel
 ```
 
 

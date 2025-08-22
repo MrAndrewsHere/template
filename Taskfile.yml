@@ -177,17 +177,18 @@ tasks:
   quality:test:
     desc: Запуск тестов
     cmds:
+      - task: app:cache-clear
       - task: artisan
-        vars: { ARGS: 'test' }
+        vars: { ARGS: 'test --env=testing --parallel' }
 
   quality:all:
     desc: Полная проверка качества кода
     cmds:
       - task: quality:pint:check
       - task: quality:rector
+      - task: quality:test
       - task: quality:insights
       - task: quality:stan
-      - task: quality:test
 
   # === Композитные / Сценарные задачи ===
   init:
@@ -199,7 +200,9 @@ tasks:
       - task: app:storage-link
       - task: app:horizon-install
       - task: db:setup
-      - task: compose:restart
+      - task: compose:stop
+      - task: compose:up
+      - task: quality:all
 
   # === Утилиты ===
   echo:
