@@ -16,7 +16,7 @@ services:
         <<: *x-app
 #        user: "${UID:-1000}:${GID:-1000}"
         ports:
-            - "8000:8000"
+            - "8080:8080"
         volumes:
             - .:/var/www/html
             - ./docker/supervisor/common.conf:/etc/supervisor/common.conf
@@ -53,6 +53,16 @@ services:
         restart: unless-stopped
         env_file:
             - .env
+        networks:
+            - laravel_network
+
+    buggregator:
+        image: ghcr.io/buggregator/server:dev
+        ports:
+            - 127.0.0.1:8000:8000
+            - 127.0.0.1:1025:1025
+            - 127.0.0.1:9912:9912
+            - 127.0.0.1:9913:9913
         networks:
             - laravel_network
 

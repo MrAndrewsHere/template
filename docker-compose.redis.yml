@@ -1,0 +1,96 @@
+x-redis-service: &redis-service
+  image: redis:alpine
+  command: [ "redis-server", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+  environment:
+    - SKIP_FIX_PERMS=1
+  healthcheck:
+    test: [ "CMD", "redis-cli", "cluster", "info" ]
+    interval: 2s
+    timeout: 2s
+    retries: 3
+  networks:
+    - redis-cluster
+
+services:
+  redis-node-1:
+    <<: *redis-service
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data-1:/data
+
+  redis-node-2:
+    <<: *redis-service
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data-2:/data
+
+  redis-node-3:
+    <<: *redis-service
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis-data-3:/data
+
+  redis-node-4:
+    <<: *redis-service
+    ports:
+      - "6382:6379"
+    volumes:
+      - redis-data-4:/data
+
+  redis-node-5:
+    <<: *redis-service
+    ports:
+      - "6383:6379"
+    volumes:
+      - redis-data-5:/data
+
+  redis-node-6:
+    <<: *redis-service
+    ports:
+      - "6384:6379"
+    volumes:
+      - redis-data-6:/data
+
+  redis-init:
+    image: redis:alpine
+    depends_on:
+      redis-node-1:
+        condition: service_healthy
+      redis-node-2:
+        condition: service_healthy
+      redis-node-3:
+        condition: service_healthy
+      redis-node-4:
+        condition: service_healthy
+      redis-node-5:
+        condition: service_healthy
+      redis-node-6:
+        condition: service_healthy
+    networks:
+      - redis-cluster
+    entrypoint: >
+      sh -c "
+      sleep 2 &&
+      redis-cli --cluster create
+      redis-node-1:6379 redis-node-2:6379 redis-node-3:6379
+      redis-node-4:6379 redis-node-5:6379 redis-node-6:6379
+      --cluster-replicas 1 --cluster-yes &&
+      echo 'Cluster initialized successfully'
+      "
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-h", "redis-node-1", "cluster", "info" ]
+      interval: 5s
+
+volumes:
+  redis-data-1:
+  redis-data-2:
+  redis-data-3:
+  redis-data-4:
+  redis-data-5:
+  redis-data-6:
+
+networks:
+  redis-cluster:
