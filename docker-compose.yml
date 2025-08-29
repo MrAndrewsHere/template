@@ -14,14 +14,15 @@ x-app: &x-app
 services:
     app:
         <<: *x-app
-#        user: "${UID:-1000}:${GID:-1000}"
+        #        user: "${UID:-1000}:${GID:-1000}"
         ports:
             - "8080:8080"
         volumes:
             - .:/var/www/html
             - ./docker/supervisor/common.conf:/etc/supervisor/common.conf
             - ./docker/supervisor/dev.conf:/etc/supervisor/conf.d/supervisord.conf
-
+            - ./docker/app/php.ini:/usr/local/etc/php/php.ini
+            - ./Caddyfile:/etc/caddy/Caddyfile
     scheduler:
         <<: *x-app
         container_name: ${APP_NAMESPACE}-scheduler
@@ -56,15 +57,15 @@ services:
         networks:
             - laravel_network
 
-    buggregator:
-        image: ghcr.io/buggregator/server:dev
-        ports:
-            - 127.0.0.1:8000:8000
-            - 127.0.0.1:1025:1025
-            - 127.0.0.1:9912:9912
-            - 127.0.0.1:9913:9913
-        networks:
-            - laravel_network
+#    buggregator:
+#        image: ghcr.io/buggregator/server:dev
+#        ports:
+#            - 127.0.0.1:8000:8000
+#            - 127.0.0.1:1025:1025
+#            - 127.0.0.1:9912:9912
+#            - 127.0.0.1:9913:9913
+#        networks:
+#            - laravel_network
 
 networks:
     laravel_network:

@@ -2,6 +2,7 @@
 
 <h1 align="center"><a href="https://frankenphp.dev"><img src="frankenphp.png" alt="FrankenPHP" width="400"></a></h1>
 
+http://127.0.0.1:8080/
 # Getting Started
 
 ## Настройка окружения

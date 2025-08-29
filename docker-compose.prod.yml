@@ -5,4 +5,5 @@ services:
       volumes:
         - ./docker/supervisor/common.conf:/etc/supervisor/common.conf
         - ./docker/supervisor/prod.conf:/etc/supervisor/conf.d/supervisord.conf
+        - ./Caddyfile:/etc/caddy/Caddyfile
 

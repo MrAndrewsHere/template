@@ -1,0 +1,44 @@
+{
+    admin off
+    auto_https off
+}
+
+(site) {
+    encode zstd gzip
+    root * /var/www/html/public
+
+    @static {
+        file
+        path /build/* /assets/* /storage/* *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.webp *.avif *.woff *.woff2 *.ttf
+    }
+    handle @static {
+        file_server
+        header Cache-Control "public, max-age=31536000, immutable"
+    }
+
+    # Simple health check endpoint
+    handle_path /health {
+        respond 200
+    }
+
+    # Serve PHP via FrankenPHP
+    php_server
+
+    # Fallback to public/index.php for Laravel
+    try_files {path} /index.php
+
+    # Serve remaining files
+    file_server
+
+    # Basic security headers
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}
+
+:8000, :8080 {
+    import site
+}
+
