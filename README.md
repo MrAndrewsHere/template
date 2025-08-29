@@ -2,10 +2,19 @@
 
 <h1 align="center"><a href="https://frankenphp.dev"><img src="frankenphp.png" alt="FrankenPHP" width="400"></a></h1>
 
-- http://127.0.0.1:8080/
-- http://127.0.0.1:8080/horizon/dashboard
-- http://127.0.0.1:8080/telescope/requests
-- http://127.0.0.1:8080/pulse
+
+(http://127.0.0.1/)
+
+Stack:
+- Laravel (Octane/FrankenPHP) 
+- PostgreSQL
+- Redis
+
+Dashboards:
+- Pulse (http://127.0.0.1/pulse)
+- Horizon (http://127.0.0.1/horizon/dashboard)
+- Telescope (http://127.0.0.1/telescope/requests)
+
 # Getting Started
 
 ## Настройка окружения
@@ -36,7 +45,7 @@ task init
 ## Commonly used tasks
 
 ```bash
-make/task exec
+make/task exec # контейнер laravel
 ```
 ```bash
 make/task up
@@ -48,7 +57,7 @@ make/task stop
 make/task tink
 ```
 ```bash
-make/task check
+make/task check # проверка качества кода
 ```
 
 
@@ -63,5 +72,7 @@ task check
 ```
 
 # About 
+
+
 
 Description

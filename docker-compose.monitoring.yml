@@ -1,0 +1,86 @@
+services:
+
+  #    buggregator:
+  #        image: ghcr.io/buggregator/server:dev
+  #        ports:
+  #            - 127.0.0.1:8000:8000
+  #            - 127.0.0.1:1025:1025
+  #            - 127.0.0.1:9912:9912
+  #            - 127.0.0.1:9913:9913
+  #        networks:
+  #            - site_network
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    container_name: prometheus
+    restart: unless-stopped
+    networks:
+      - site_network
+      - monitoring
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/console_templates'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-remote-write-receiver'
+      - '--web.enable-lifecycle'
+
+  # Мониторинг - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    networks:
+      - monitoring
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+  # Экспортер для PostgreSQL
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter
+    networks:
+      - monitoring
+    environment:
+      - DATA_SOURCE_NAME=postgresql://laravel:secret@postgres:5432/laravel?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      - db
+
+  # Экспортер для Redis
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis-exporter
+    networks:
+      - monitoring
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      - redis
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+networks:
+  site_network:
+  monitoring:

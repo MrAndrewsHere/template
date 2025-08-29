@@ -33,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
             $this->app->register(TelescopeServiceProvider::class);
         }
     }
+
     private function schedule(): void
     {
         Schedule::job(new Test)->everyMinute();
