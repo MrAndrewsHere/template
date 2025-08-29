@@ -16,4 +16,14 @@ class ExampleTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    /**
+     * Test that the application returns a 404 error for non-existent routes.
+     */
+    public function test_the_application_returns_a_404_error_for_non_existent_routes(): void
+    {
+        $response = $this->get('/nonexistentroute');
+
+        $response->assertStatus(404);
+    }
 }

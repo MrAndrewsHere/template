@@ -28,7 +28,10 @@ RUN install-php-extensions \
     exif \
     bcmath
 
-
+RUN install-php-extensions \
+    intl \
+    xsl \
+    curl
 
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
