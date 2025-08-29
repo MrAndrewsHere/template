@@ -2,7 +2,10 @@
 
 <h1 align="center"><a href="https://frankenphp.dev"><img src="frankenphp.png" alt="FrankenPHP" width="400"></a></h1>
 
-http://127.0.0.1:8080/
+- http://127.0.0.1:8080/
+- http://127.0.0.1:8080/horizon/dashboard
+- http://127.0.0.1:8080/telescope/requests
+- http://127.0.0.1:8080/pulse
 # Getting Started
 
 ## Настройка окружения

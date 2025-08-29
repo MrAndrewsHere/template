@@ -24,6 +24,4 @@ RUN install-php-extensions \
 
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
-
-
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

@@ -23,19 +23,6 @@ services:
             - ./docker/supervisor/dev.conf:/etc/supervisor/conf.d/supervisord.conf
             - ./docker/app/php.ini:/usr/local/etc/php/php.ini
             - ./Caddyfile:/etc/caddy/Caddyfile
-    scheduler:
-        <<: *x-app
-        container_name: ${APP_NAMESPACE}-scheduler
-#        user: "${UID:-1000}:${GID:-1000}"
-        command: >
-            sh -c "while true; do
-            php artisan schedule:run --verbose --no-interaction;
-            sleep 60;
-            done"
-        volumes:
-            - .:/var/www/html
-        depends_on:
-            - app
     db:
         image: postgres:latest
         env_file:
