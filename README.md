@@ -8,107 +8,55 @@
 
 1. Скопируйте файл окружения:
 ```bash
-cp .env.example .env
+cp -n .env.example .env
 ```
 ```bash
-cp .env.testing.example .env.testing
+cp -n .env.testing.example .env.testing
 ```
 2. Настройте необходимые переменные в `.env`:
 ```bash
-APP_NAMESPACE=value
+APP_NAMESPACE=value # value - префикс к сервисам docker-compose 
 ```
 3. Инициализация проекта:
 
-С использованием Taskfile (https://taskfile.dev/docs/installation#get-the-binary):
+Makefile:
+```bash
+make init
+```
+Taskfile (https://taskfile.dev/docs/installation#get-the-binary):
 ```bash
 task init
 ```
 
-Вручную:
+
+## Commonly used tasks
 
 ```bash
-docker-compose up -d --build
-```
-
-```bash
-docker exec -it value-app /bin/bash # вместо 'value' - значение APP_NAMESPACE из .env
-```
-
-Внутри контейнера:
-```bash
-composer install
+make/task exec
 ```
 ```bash
-php artisan key:generate
+make/task up
 ```
 ```bash
-php artisan storage:link
+make/task stop
 ```
 ```bash
-php artisan migrate
+make/task tink
 ```
 ```bash
-php artisan db:seed
-```
-```bash
-exit
-```
-```bash
-docker-compose stop
-```
-```bash
-docker-compose start
-```
-```bash
-php artisan test --env=testing --parallel
-```
-
-## Taskfile
-
-```bash
-task exec
-```
-```bash
-task up
-```
-```bash
-task stop
-```
-```bash
-task tink
-```
-```bash
-task check
+make/task check
 ```
 
 
 
 # Code quality: 
 ```bash
-task check
+make check
 ```
 или
-
 ```bash
-docker exec -it value-app /bin/bash # вместо 'value' - значение APP_NAMESPACE из .env
+task check
 ```
-
-```bash
-vendor/bin/pint --config ./pint.json
-```
-```bash
-vendor/bin/rector process
-```
-```bash
-vendor/bin/phpinsights --quiet
-```
-```bash
-vendor/bin/phpstan analyse -c ./phpstan.neon
-```
-```bash
-php artisan test --env=testing --parallel
-```
-
 
 # About 
 
