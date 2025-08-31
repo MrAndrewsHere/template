@@ -12,6 +12,8 @@ COMPOSE ?= docker-compose
 
 DOCKER_EXEC := docker exec $(DOCKER_TTY) $(CONTAINER)
 
+.DEFAULT_GOAL := echo
+
 # -------------------------------------------------------------------
 # Compose / Orchestration
 # -------------------------------------------------------------------
@@ -132,8 +134,8 @@ init:
 	$(MAKE) app-storage-link
 	$(MAKE) app-horizon-install
 	$(MAKE) db-setup
-	$(MAKE) compose-stop
-	$(MAKE) compose-up
+	$(MAKE) swagger
+	$(MAKE) compose-restart
 	$(MAKE) quality-all
 
 # -------------------------------------------------------------------
@@ -141,13 +143,17 @@ init:
 # -------------------------------------------------------------------
 .PHONY: echo
 echo:
-	@echo $(APP_NAMESPACE)
-	@echo $(CONTAINER)
+	@echo Hello World! I am Makefile.
+	@echo APP_NAMESPACE: $(APP_NAMESPACE)
+	@echo CONTAINER: $(CONTAINER)
 
 .PHONY: tink
 tink:
 	docker exec -it $(CONTAINER) php artisan tink
 
+.PHONY: swagger
+swagger:
+	docker exec -it $(CONTAINER) php artisan l5-swagger:generate
 # -------------------------------------------------------------------
 # Aliases (совместимость со старыми именами)
 # -------------------------------------------------------------------

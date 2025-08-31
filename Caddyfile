@@ -16,11 +16,6 @@
         header Cache-Control "public, max-age=31536000, immutable"
     }
 
-    # Simple health check endpoint
-    handle_path /health {
-        respond 200
-    }
-
     # Serve PHP via FrankenPHP
     php_server
 

@@ -1,20 +1,30 @@
 <?php
 
 use Rector\Config\RectorConfig;
-use Rector\TypeDeclaration\Rector\Property\TypedPropertyFromStrictConstructorRector;
+use Rector\Php81\Rector\Property\ReadOnlyPropertyRector;
+use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
 
 return RectorConfig::configure()
-    // register a single rule
     ->withRules([
-        TypedPropertyFromStrictConstructorRector::class,
+        DeclareStrictTypesRector::class,
+        ReadOnlyPropertyRector::class,
     ])
-    // here we can define what prepared sets of rules will be applied
     ->withPreparedSets(
         deadCode: true,
-        codeQuality: true
+        codeQuality: true,
+        typeDeclarations: true,
+        naming: true,
+        earlyReturn: true,
+        phpunitCodeQuality: true
     )
     ->withPaths([
         __DIR__.'/app',
         __DIR__.'/config',
         __DIR__.'/database',
-    ]);
+        __DIR__.'/tests',
+    ])
+    ->withSkip([
+        __DIR__.'/app/Swagger',
+    ])
+    ->withParallel()
+    ->withImportNames();
