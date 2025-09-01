@@ -104,7 +104,7 @@ quality-rector:
 
 .PHONY: quality-insights
 quality-insights:
-	$(DOCKER_EXEC) vendor/bin/phpinsights --quiet
+	$(DOCKER_EXEC) vendor/bin/phpinsights --summary
 
 .PHONY: quality-stan
 quality-stan:
@@ -134,9 +134,9 @@ init:
 	$(MAKE) app-storage-link
 	$(MAKE) app-horizon-install
 	$(MAKE) db-setup
-	$(MAKE) swagger
-	$(MAKE) compose-restart
-	$(MAKE) quality-all
+	$(MAKE) compose-stop
+	$(MAKE) compose-up
+	$(MAKE) quality-test
 
 # -------------------------------------------------------------------
 # Utils
