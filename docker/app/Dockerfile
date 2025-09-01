@@ -37,4 +37,16 @@ COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest
+
+RUN node --version \
+    && npm --version
+
+RUN apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
 EXPOSE 80
+EXPOSE 5173
