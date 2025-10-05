@@ -27,7 +27,6 @@ class JsonErrorHelper
             }
 
             return match (true) {
-                $throwable instanceof BaseException => static::makeResponse($throwable->getMessage(), $throwable->getCode()),
 
                 $throwable instanceof ValidationException => static::makeResponse('The given data was invalid.', $throwable->status, $throwable->errors()),
 

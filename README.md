@@ -41,6 +41,62 @@ Taskfile (https://taskfile.dev/docs/installation#get-the-binary):
 task init
 ```
 
+## About 
+
+1. Модели и миграции
+Создать таблицы:
+
+users (можно взять стандартную от Laravel php artisan make:auth или php artisan migrate).
+
+tasks:
+
+id
+
+user_id (FK на users)
+
+title (string, обязательное)
+
+description (text, необязательное)
+
+status (enum или string: pending, in_progress, done, default pending)
+
+due_date (date, необязательное)
+
+timestamps.
+
+2. Связи
+User имеет много Task (hasMany).
+
+Task принадлежит User (belongsTo).
+
+3. API (CRUD)
+Сделать REST API (api.php) с роутами:
+
+GET /api/tasks — список задач авторизованного пользователя.
+
+POST /api/tasks — создать задачу.
+
+GET /api/tasks/{id} — получить задачу.
+
+PUT /api/tasks/{id} — обновить задачу.
+
+DELETE /api/tasks/{id} — удалить задачу.
+
+⚠️ Доступ к задачам — только у владельца (авторизация через Auth::id()).
+
+4. Валидация
+При создании/обновлении задачи:
+
+title — обязательное, min:3.
+
+status — только pending|in_progress|done.
+
+due_date — date, >= сегодня.
+
+5. Ответ API JSON вида:
+
+{ "id": 1, "title": "Купить хлеб", "status": "pending", "due_date": "2025-09-05", "user": { "id": 1, "name": "Alex" } } 
+
 
 ## Commonly used tasks
 
@@ -71,8 +127,3 @@ make check
 task check
 ```
 
-# About 
-
-
-
-Description
