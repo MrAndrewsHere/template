@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
 // use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,9 +14,9 @@ class ExampleTest extends TestCase
      */
     public function test_the_application_returns_a_successful_response(): void
     {
-        $response = $this->get('/');
+        $testResponse = $this->get('/');
 
-        $response->assertStatus(200);
+        $testResponse->assertStatus(200);
     }
 
     /**
@@ -22,8 +24,8 @@ class ExampleTest extends TestCase
      */
     public function test_the_application_returns_a_404_error_for_non_existent_routes(): void
     {
-        $response = $this->get('/nonexistentroute');
+        $testResponse = $this->get('/nonexistentroute');
 
-        $response->assertStatus(404);
+        $testResponse->assertStatus(404);
     }
 }

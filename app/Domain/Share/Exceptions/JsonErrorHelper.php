@@ -15,18 +15,18 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 class JsonErrorHelper
 {
     public static function handle(Exceptions $exceptions): void
     {
-        $exceptions->render(function (\Throwable $throwable): ?\Illuminate\Http\JsonResponse {
+        $exceptions->render(function (Throwable $throwable): ?JsonResponse {
             if (! static::wantsJson()) {
                 return null;
             }
 
             return match (true) {
-                $throwable instanceof BaseException => static::makeResponse($throwable->getMessage(), $throwable->getCode()),
 
                 $throwable instanceof ValidationException => static::makeResponse('The given data was invalid.', $throwable->status, $throwable->errors()),
 
