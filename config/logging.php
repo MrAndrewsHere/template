@@ -135,6 +135,12 @@ return [
             'level' => 'info',
             'days' => 14,
         ],
+        'notifications' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/notifications/notifications.log'),
+            'level' => 'info',
+            'days' => 14,
+        ],
 
     ],
 

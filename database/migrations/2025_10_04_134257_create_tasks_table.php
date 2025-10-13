@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Service\Enums\PriorityEnum;
 use App\Service\Enums\TaskStatusEnum;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -24,16 +25,10 @@ return new class extends Migration
             $blueprint->string('title');
             $blueprint->text('description')->nullable();
             $blueprint->string('status', 25)->default(TaskStatusEnum::default()->value);
-            $blueprint->date('due_date')->nullable();
+            $blueprint->string('priority', 25)->default(PriorityEnum::default()->value);
             $blueprint->timestamps();
 
             $blueprint->index('user_id'); // posgresql не создает автоматически индекс на внешний ключ
-
-            $blueprint->index('status');
-            $blueprint->index('due_date');
-
-            $blueprint->index(['user_id', 'status']);
-            $blueprint->index(['user_id', 'due_date']);
         });
     }
 

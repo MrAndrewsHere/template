@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Jobs\Test;
-use App\Models\Task;
-use App\Models\User;
-use App\Policies\TaskPolicy;
+use App\Notifications\Channels\LogChannel;
+use App\Service\Interfaces\OverdueServiceInterface;
+use App\Service\Interfaces\TaskNotificationServiceInterface;
+use App\Service\Interfaces\TaskPipelineInterface;
 use App\Service\Interfaces\TaskServiceInterface;
-use App\Service\TaskService;
+use App\Service\Tasks\CheckOverdueService;
+use App\Service\Tasks\TaskNotificationService;
+use App\Service\Tasks\TaskPipeline;
+use App\Service\Tasks\TaskService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
 
@@ -34,14 +36,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::preventLazyLoading(! app()->isProduction());
+
         JsonResource::withoutWrapping();
-        $this->schedule();
 
-        Gate::policy(Task::class, TaskPolicy::class);
-
-        $this->app->bind(TaskServiceInterface::class, function (): TaskService {
-            return new TaskService(Auth::check() ? request()->user() : new User);
-        });
+        $this
+            ->bindServices()
+            ->extendNotification()
+            ->schedule();
 
     }
 
@@ -53,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
         }
     }
 
-    private function schedule(): void
+    private function schedule(): static
     {
         //        Schedule::job(new Test)->everyMinute();
 
@@ -63,5 +64,24 @@ class AppServiceProvider extends ServiceProvider
 
         Schedule::command('telescope:prune --hours=72')->daily();
 
+        return $this;
+
+    }
+
+    private function bindServices(): static
+    {
+        $this->app->bind(TaskServiceInterface::class, TaskService::class);
+        $this->app->bind(TaskNotificationServiceInterface::class, TaskNotificationService::class);
+        $this->app->bind(OverdueServiceInterface::class, CheckOverdueService::class);
+        $this->app->bind(TaskPipelineInterface::class, TaskPipeline::class);
+
+        return $this;
+    }
+
+    private function extendNotification(): static
+    {
+        Notification::extend('log', fn (): LogChannel => new LogChannel);
+
+        return $this;
     }
 }

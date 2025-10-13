@@ -21,6 +21,8 @@ return new class extends Migration
             $blueprint->string('password');
             $blueprint->rememberToken();
             $blueprint->timestamps();
+
+            $blueprint->string('position', 25);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $blueprint): void {

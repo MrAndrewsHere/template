@@ -4,42 +4,25 @@ declare(strict_types=1);
 
 namespace App\Service\Enums;
 
+use App\Service\Enums\Traits\HasBaseEnum;
+use App\Service\Enums\Traits\HasTranslationLabel;
+
 enum TaskStatusEnum: string
 {
-    case PENDING = 'pending';
+    use HasBaseEnum, HasTranslationLabel;
+
+    case NEW = 'new';
     case IN_PROGRESS = 'in_progress';
-    case DONE = 'done';
+    case COMPLETED = 'completed';
+    case CANCELLED = 'cancelled';
 
-    private const TRANSLATION_PREFIX = 'enums.task.status.';
-
-    public function label(): string
+    public static function translationPrefix(): string
     {
-        $translated = __($this->translationKey());
-
-        if ($translated === $this->translationKey()) {
-            return $this->defaultLabel();
-        }
-
-        return (string) $translated;
+        return 'enums.task.status.';
     }
 
-    private function defaultLabel(): string
+    public static function default(): self
     {
-        return ucfirst(strtolower($this->value));
-    }
-
-    public function translationKey(): string
-    {
-        return self::TRANSLATION_PREFIX.$this->value;
-    }
-
-    public static function default(): \App\Service\Enums\TaskStatusEnum
-    {
-        return self::PENDING;
-    }
-
-    public static function values(): array
-    {
-        return array_column(self::cases(), 'value');
+        return self::NEW;
     }
 }

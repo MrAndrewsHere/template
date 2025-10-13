@@ -6,7 +6,9 @@ namespace Database\Factories;
 
 use App\Models\Task;
 use App\Models\User;
+use App\Service\Enums\PriorityEnum;
 use App\Service\Enums\TaskStatusEnum;
+use Database\Factories\Traits\HasForUser;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -14,6 +16,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class TaskFactory extends Factory
 {
+    use HasForUser;
+
     /**
      * Define the model's default state.
      *
@@ -22,39 +26,62 @@ class TaskFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'user_id' => User::factory()->notManager(),
             'title' => $this->faker->sentence(4),
             'description' => $this->faker->optional(0.7)->paragraph(3),
             'status' => $this->faker->randomElement(TaskStatusEnum::cases())->value,
-            'due_date' => $this->faker->optional(0.6)->dateTimeBetween('now', '+30 days')?->format('Y-m-d'),
+            'priority' => $this->faker->randomElement(PriorityEnum::cases())->value,
+            'created_at' => now(),
         ];
     }
 
-    public function pending(): static
+    public function status(TaskStatusEnum $status): static
     {
-        return $this->state(function (array $attributes): array {
-            return [
-                'status' => TaskStatusEnum::PENDING->value,
-            ];
-        });
+        return $this->state(fn (array $attributes): array => [
+            'status' => $status->value,
+        ]);
+    }
+
+    public function recentlyCreated(): static
+    {
+        return $this->status(TaskStatusEnum::NEW);
     }
 
     public function inProgress(): static
     {
-        return $this->state(function (array $attributes): array {
-            return [
-                'status' => TaskStatusEnum::IN_PROGRESS->value,
-            ];
-        });
+        return $this->status(TaskStatusEnum::IN_PROGRESS);
     }
 
-    public function done(): static
+    public function completed(): static
     {
-        return $this->state(function (array $attributes): array {
-            return [
-                'status' => TaskStatusEnum::DONE->value,
-            ];
-        });
+        return $this->status(TaskStatusEnum::COMPLETED);
+    }
+
+    public function cancelled(): static
+    {
+        return $this->status(TaskStatusEnum::CANCELLED);
+    }
+
+    public function priority(PriorityEnum $priority): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'priority' => $priority->value,
+        ]);
+    }
+
+    public function low(): static
+    {
+        return $this->priority(PriorityEnum::LOW);
+    }
+
+    public function high(): static
+    {
+        return $this->priority(PriorityEnum::HIGH);
+    }
+
+    public function normal(): static
+    {
+        return $this->priority(PriorityEnum::NORMAL);
     }
 
     public function withDescription(): static
@@ -79,19 +106,7 @@ class TaskFactory extends Factory
     {
         return $this->state(function (array $attributes): array {
             return [
-                'due_date' => $this->faker->dateTimeBetween('now', '+30 days')->format('Y-m-d'),
-            ];
-        });
-    }
-
-    /**
-     * Задача без срока выполнения
-     */
-    public function withoutDueDate(): static
-    {
-        return $this->state(function (array $attributes): array {
-            return [
-                'due_date' => null,
+                'created_at' => $this->faker->dateTimeBetween('now', '+30 days'),
             ];
         });
     }
@@ -103,17 +118,8 @@ class TaskFactory extends Factory
     {
         return $this->state(function (array $attributes): array {
             return [
-                'due_date' => $this->faker->dateTimeBetween('-30 days', '-1 day')->format('Y-m-d'),
-                'status' => $this->faker->randomElement([TaskStatusEnum::PENDING, TaskStatusEnum::IN_PROGRESS])->value,
-            ];
-        });
-    }
-
-    public function dueToday(): static
-    {
-        return $this->state(function (array $attributes): array {
-            return [
-                'due_date' => now()->format('Y-m-d'),
+                'created_at' => $this->faker->dateTimeBetween('-30 days', '-8 day'),
+                'status' => $this->faker->randomElement([TaskStatusEnum::IN_PROGRESS])->value,
             ];
         });
     }
@@ -122,16 +128,7 @@ class TaskFactory extends Factory
     {
         return $this->state(function (array $attributes): array {
             return [
-                'due_date' => now()->addDay()->format('Y-m-d'),
-            ];
-        });
-    }
-
-    public function forUser(User $user): static
-    {
-        return $this->state(function (array $attributes) use ($user): array {
-            return [
-                'user_id' => $user->id,
+                'created_at' => now()->addDay(),
             ];
         });
     }

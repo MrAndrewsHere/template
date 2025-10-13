@@ -1,20 +1,21 @@
 <?php
 
 use App\Http\Controllers\TaskController;
-use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return app()->version();
 });
 
-Route::prefix('v1')->middleware('auth:sanctum')->group(function ($route) {
+Route::prefix('v1')->middleware(['api'])->group(function (Router $route) {
 
     $route->get('/', fn () => app()->version());
 
-    $route->get('/user', function (Request $request) {
-        return $request->user();
-    })->name('user');
+    $route->apiResource('tasks', TaskController::class)
+        ->only(['index', 'store', 'show']);
 
-    $route->apiResource('tasks', TaskController::class);
+    $route->put('tasks/{task}/status', [TaskController::class, 'status'])->name('tasks.status.update');
+
+    $route->post('tasks/{task}/comments', [TaskController::class, 'comment'])->name('tasks.comments.store');
 });

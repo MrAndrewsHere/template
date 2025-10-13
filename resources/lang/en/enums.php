@@ -3,9 +3,17 @@
 return [
     'task' => [
         'status' => [
-            'pending' => 'Pending',
-            'done' => 'Done',
-            'in_progress' => 'In progress',
+            'new' => 'New',
+            'completed' => 'Completed',
+            'in_progress' => 'In Progress',
+            'cancelled' => 'Cancelled',
+        ],
+    ],
+    'notification' => [
+        'type' => [
+            'status_changed' => 'Status changed',
+            'task_assigned' => 'Assigned',
+            'overdue' => 'Overdue',
         ],
     ],
 ];

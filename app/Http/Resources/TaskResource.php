@@ -26,13 +26,14 @@ class TaskResource extends JsonResource
             'id' => $task->id,
             'title' => $task->title,
             'description' => $task->description,
-            'status' => [
-                'label' => $task->status->label(),
-                'value' => $task->status->value,
-            ],
-            'due_date' => $task->due_date,
+            'status' => $task->status->toArray(),
+            'priority' => $task->priority->toArray(),
             'user_id' => $task->user_id,
             'user' => $task->relationLoaded('user') ? UserResource::make($task->user) : null,
+            'created_at' => $task->created_at,
+            'updated_at' => $task->updated_at,
+
+            'comments' => $task->relationLoaded('comments') ? CommentResource::collection($task->comments) : [],
         ];
     }
 }

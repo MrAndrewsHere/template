@@ -73,8 +73,23 @@ app-horizon-install:
 	$(DOCKER_EXEC) php artisan horizon:install
 
 # -------------------------------------------------------------------
+# App
+# -------------------------------------------------------------------
+.PHONY: check-overdue
+check-overdue:
+	$(DOCKER_EXEC) php artisan tasks:check-overdue
+
+.PHONY: check-overdue-dry
+check-overdue-dry:
+	$(DOCKER_EXEC) php artisan tasks:check-overdue --dry-run
+
+# -------------------------------------------------------------------
 # Database
 # -------------------------------------------------------------------
+.PHONY: db-wipe
+db-wipe:
+	$(DOCKER_EXEC) php artisan db:wipe
+
 .PHONY: db-migrate
 db-migrate:
 	$(DOCKER_EXEC) php artisan migrate
@@ -82,6 +97,9 @@ db-migrate:
 .PHONY: db-seed
 db-seed:
 	$(DOCKER_EXEC) php artisan db:seed
+
+.PHONY: db-refresh
+db-refresh: db-wipe db-setup
 
 .PHONY: db-setup
 db-setup: db-migrate db-seed

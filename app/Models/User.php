@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Service\Enums\UserPositionEnum;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\hasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -29,6 +32,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'position',
     ];
 
     /**
@@ -51,11 +55,32 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'position' => UserPositionEnum::class,
         ];
     }
 
     public function tasks(): hasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    public function comments(): hasMany
+    {
+        return $this->hasMany(TaskComment::class);
+    }
+
+    public function notifications(): hasMany
+    {
+        return $this->hasMany(TaskNotification::class);
+    }
+
+    public function scopePosition(Builder $builder, UserPositionEnum $position)
+    {
+        return $builder->where('position', '=', $position->value);
+    }
+
+    public function scopeManager(Builder $builder)
+    {
+        return $builder->position(UserPositionEnum::MANAGER);
     }
 }

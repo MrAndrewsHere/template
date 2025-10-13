@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreTaskCommentRequest;
 use App\Http\Requests\TaskRequest;
+use App\Http\Requests\UpdateTaskStatusRequest;
+use App\Http\Resources\CommentResource;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
+use App\Service\DTOs\Task\TaskCommentDTO;
 use App\Service\DTOs\Task\TaskDTO;
+use App\Service\DTOs\Task\TaskStatusDTO;
 use App\Service\Interfaces\TaskServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Gate;
 
 class TaskController extends Controller
 {
@@ -35,28 +39,25 @@ class TaskController extends Controller
 
     public function show(Task $task): JsonResponse
     {
-        Gate::authorize('view', $task);
+        return TaskResource::make(
+            $this->service->show($task))
+            ->response();
+    }
+
+    public function status(UpdateTaskStatusRequest $request, Task $task): JsonResponse
+    {
+        $this->service->status(TaskStatusDTO::from($request->validated()), $task);
 
         return TaskResource::make(
             $this->service->show($task))
             ->response();
     }
 
-    public function update(TaskRequest $updateTaskRequest, Task $task): JsonResponse
+    public function comment(StoreTaskCommentRequest $request, Task $task): JsonResponse
     {
-        Gate::authorize('update', $task);
-
-        return TaskResource::make(
-            $this->service->update(TaskDTO::from($updateTaskRequest->validated()), $task))
-            ->response();
-    }
-
-    public function destroy(Task $task): JsonResponse
-    {
-        Gate::authorize('delete', $task);
-
-        $this->service->destroy($task);
-
-        return response()->json(status: 204);
+        return CommentResource::make(
+            $this->service->comment($task, TaskCommentDTO::from($request->validated())))
+            ->response()
+            ->setStatusCode(201);
     }
 }
