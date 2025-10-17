@@ -19,24 +19,19 @@ class TaskNotificationService implements TaskNotificationServiceInterface
     public function notifyManagers(NotificationTypeEnum $type): void
     {
         $this->managers()
-            ->each($this->notifyUserWithOverdue(...));
-    }
-
-    public function notifyUserWithOverdue(User $user): void
-    {
-        $this->notifyUserWithAlert($user, NotificationTypeEnum::OVERDUE);
+            ->each(fn (User $user) => $this->notifyUserWithAlert($user, $type));
     }
 
     public function notifyUserWithAlert(User $user, NotificationTypeEnum $type): void
     {
-        $this->makeNotificate([
+        $this->createNotification([
             'notification_type' => $type->toArray(),
             'task' => $this->task->toArray(),
         ])
             ->notify(new TaskAlertNotification);
     }
 
-    public function makeNotificate(array|string $msg): TaskNotification
+    protected function createNotification(array|string $msg): TaskNotification
     {
         return TaskNotification::create([
             'user_id' => $this->task->user_id,

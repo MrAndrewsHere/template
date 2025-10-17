@@ -7,11 +7,9 @@ namespace App\Providers;
 use App\Notifications\Channels\LogChannel;
 use App\Service\Interfaces\OverdueServiceInterface;
 use App\Service\Interfaces\TaskNotificationServiceInterface;
-use App\Service\Interfaces\TaskPipelineInterface;
 use App\Service\Interfaces\TaskServiceInterface;
 use App\Service\Tasks\CheckOverdueService;
 use App\Service\Tasks\TaskNotificationService;
-use App\Service\Tasks\TaskPipeline;
 use App\Service\Tasks\TaskService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -73,7 +71,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TaskServiceInterface::class, TaskService::class);
         $this->app->bind(TaskNotificationServiceInterface::class, TaskNotificationService::class);
         $this->app->bind(OverdueServiceInterface::class, CheckOverdueService::class);
-        $this->app->bind(TaskPipelineInterface::class, TaskPipeline::class);
 
         return $this;
     }

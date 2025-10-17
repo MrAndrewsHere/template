@@ -10,8 +10,10 @@ use App\Models\User;
 use App\Service\DTOs\Task\TaskCommentDTO;
 use App\Service\DTOs\Task\TaskDTO;
 use App\Service\DTOs\Task\TaskStatusDTO;
-use App\Service\Interfaces\TaskPipelineInterface;
+use App\Service\Enums\NotificationTypeEnum;
+use App\Service\Enums\TaskStatusEnum;
 use App\Service\Interfaces\TaskServiceInterface;
+use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 
@@ -36,23 +38,31 @@ class TaskService implements TaskServiceInterface
 
     public function store(TaskDTO $DTO): Task
     {
-        return $this
-            ->pipeline(new Task($DTO->toArray()))
-            ->handleStatus()
-            ->assignManager()
-            ->save()
-            ->highPriority()
-            ->then($this->show(...));
+        $task = new Task($DTO->toArray());
+
+        $this->handleStatusAssign($task)
+            ->handleUserAssign($task);
+
+        $task->save();
+
+        $this->handleHighPriority($task);
+
+        return $this->show($task);
     }
 
     public function status(TaskStatusDTO $DTO, Task $task): Task
     {
-        return $this
-            ->pipeline($task->fill(['status' => $DTO->status]))
-            ->save()
-            ->statusChanged()
-            ->commentCompleted(User::query()->findOrFail($DTO->user_id))
-            ->then($this->show(...));
+        $task->fill(['status' => $DTO->status]);
+
+        $task->save();
+
+        $this->handleStatusChanged($task)
+            ->commentIfCompleted($task,
+                User::query()->findOrFail($DTO->user_id)
+            );
+
+        return $this->show($task);
+
     }
 
     public function update(TaskDTO $DTO, Task $task): Task
@@ -80,10 +90,74 @@ class TaskService implements TaskServiceInterface
         ]);
     }
 
-    protected function pipeline(Task $task, array $handlers = []): TaskPipeline
+    protected function handleStatusChanged(Task $task): static
     {
-        return app(TaskPipelineInterface::class)
-            ->send($task)
-            ->through($handlers);
+        if ($task->wasChanged('status') || $task->isDirty('status')) {
+            $task->sendTaskNotification(NotificationTypeEnum::STATUS_CHANGED);
+        }
+
+        return $this;
+    }
+
+    protected function handleHighPriority(Task $task): static
+    {
+        if ($task->isHighPriority()) {
+            $task->sendTaskNotification(NotificationTypeEnum::TASK_ASSIGNED);
+        }
+
+        return $this;
+    }
+
+    protected function handleStatusAssign(Task &$task): static
+    {
+
+        if (! $task->status) {
+            $task->status = TaskStatusEnum::NEW;
+        }
+
+        if ($task->isHighPriority()) {
+
+            $task->status = TaskStatusEnum::IN_PROGRESS;
+        }
+
+        return $this;
+
+    }
+
+    protected function handleUserAssign(Task &$task): static
+    {
+
+        if ($task->user_id) {
+
+            return $this;
+        }
+
+        $manager = User::query()
+            ->manager()
+            ->inRandomOrder()
+            ->first();
+
+        if (! $manager) {
+            throw new Exception('Не удалось назначить пользователя: не найден ни один менеджер');
+        }
+
+        $task->user_id = $manager->id;
+
+        return $this;
+    }
+
+    protected function commentIfCompleted(Task $task, User $user): static
+    {
+        if (! $task->isCompleted()) {
+            return $this;
+        }
+
+        $this->comment($task, TaskCommentDTO::from([
+            'user_id' => $user->id,
+            'comment' => __('task.completed', ['user_name' => $user->name]),
+        ]));
+
+        return $this;
+
     }
 }

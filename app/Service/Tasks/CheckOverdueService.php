@@ -19,14 +19,18 @@ class CheckOverdueService implements OverdueServiceInterface
         $count = $this->builder()->count();
 
         $this->builder()
-            ->with('user')
             ->cursor()
             ->each($this->notify(...));
 
         return $count;
     }
 
-    public function notify(Task $task): void
+    public function count(): int
+    {
+        return $this->builder()->count();
+    }
+
+    protected function notify(Task $task): void
     {
         app()->make(TaskServiceInterface::class)
             ->comment($task, TaskCommentDTO::from([
@@ -35,11 +39,6 @@ class CheckOverdueService implements OverdueServiceInterface
             ]));
 
         SendTaskNotificationJob::dispatch($task->id, NotificationTypeEnum::OVERDUE);
-    }
-
-    public function count(): int
-    {
-        return $this->builder()->count();
     }
 
     protected function builder(): TaskBuilder

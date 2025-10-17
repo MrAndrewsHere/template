@@ -11,6 +11,4 @@ interface OverdueServiceInterface
     public function handle(): int;
 
     public function count(): int;
-
-    public function notify(Task $task): void;
 }
