@@ -21,10 +21,10 @@ Dashboards:
 
 1. Скопируйте файл окружения:
 ```bash
-cp -n .env.example .env
+cp .env.example .env --update=none
 ```
 ```bash
-cp -n .env.testing.example .env.testing
+cp .env.testing.example .env.testing --update=none
 ```
 2. Настройте необходимые переменные в `.env`:
 ```bash
