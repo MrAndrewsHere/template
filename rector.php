@@ -1,6 +1,7 @@
 <?php
 
 use Rector\Config\RectorConfig;
+use Rector\EarlyReturn\Rector\Return_\ReturnBinaryOrToEarlyReturnRector;
 use Rector\Php81\Rector\Property\ReadOnlyPropertyRector;
 use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
 
@@ -13,7 +14,6 @@ return RectorConfig::configure()
         deadCode: true,
         codeQuality: true,
         typeDeclarations: true,
-        naming: true,
         earlyReturn: true,
         phpunitCodeQuality: true
     )
@@ -25,6 +25,7 @@ return RectorConfig::configure()
     ])
     ->withSkip([
         __DIR__.'/app/Swagger',
+        ReturnBinaryOrToEarlyReturnRector::class
     ])
     ->withParallel()
     ->withImportNames();

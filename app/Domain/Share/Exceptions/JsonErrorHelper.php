@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Share\Exceptions;
 
+use Throwable;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,7 +21,7 @@ class JsonErrorHelper
 {
     public static function handle(Exceptions $exceptions): void
     {
-        $exceptions->render(function (\Throwable $throwable): ?\Illuminate\Http\JsonResponse {
+        $exceptions->render(function (Throwable $throwable): ?JsonResponse {
             if (! static::wantsJson()) {
                 return null;
             }

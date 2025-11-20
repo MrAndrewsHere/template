@@ -56,6 +56,10 @@ app-shell:
 app-composer-install:
 	$(DOCKER_EXEC) composer install --no-interaction --prefer-dist --no-progress
 
+.PHONY: app-npm-install
+app-npm-install:
+	$(DOCKER_EXEC) npm install
+
 .PHONY: app-key-generate
 app-key-generate:
 	$(DOCKER_EXEC) php artisan key:generate
@@ -86,6 +90,13 @@ db-seed:
 .PHONY: db-setup
 db-setup: db-migrate db-seed
 	@true
+
+.PHONY: db-wipe
+db-wipe:
+	$(DOCKER_EXEC) php artisan db:wipe
+
+.PHONY: db-refresh
+db-refresh: db-wipe db-setup
 
 # -------------------------------------------------------------------
 # Quality / CI
@@ -130,6 +141,7 @@ quality-all:
 init:
 	$(MAKE) compose-build
 	$(MAKE) app-composer-install
+	$(MAKE) app-npm-install
 	$(MAKE) app-key-generate
 	$(MAKE) app-storage-link
 	$(MAKE) app-horizon-install
@@ -195,6 +207,10 @@ down: compose-down
 
 .PHONY: composer-install
 composer-install: app-composer-install
+	@true
+
+.PHONY: npm-install
+npm-install: app-npm-install
 	@true
 
 .PHONY: key-generate
