@@ -1,15 +1,4 @@
 services:
-
-  #    buggregator:
-  #        image: ghcr.io/buggregator/server:dev
-  #        ports:
-  #            - 127.0.0.1:8000:8000
-  #            - 127.0.0.1:1025:1025
-  #            - 127.0.0.1:9912:9912
-  #            - 127.0.0.1:9913:9913
-  #        networks:
-  #            - site_network
-
   prometheus:
     image: prom/prometheus:latest
     ports:

@@ -25,7 +25,7 @@ return RectorConfig::configure()
     ])
     ->withSkip([
         __DIR__.'/app/Swagger',
-        ReturnBinaryOrToEarlyReturnRector::class
+        ReturnBinaryOrToEarlyReturnRector::class,
     ])
     ->withParallel()
     ->withImportNames();

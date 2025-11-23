@@ -33,6 +33,10 @@ RUN install-php-extensions \
     xsl \
     curl
 
+# RUN install-php-extensions \
+#     sockets \
+#     xhprof
+
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

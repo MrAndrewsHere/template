@@ -1,15 +1,7 @@
 {
-    admin off
     auto_https off
-    frankenphp {
-        num_workers 2
-        worker {
-            max_requests 250
-            memory_limit 512M
-            early_hints true 
-        }
-    
 }
+
 
 (site) {
     encode zstd gzip

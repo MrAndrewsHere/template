@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Share\Exceptions;
 
-use Throwable;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,6 +15,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 class JsonErrorHelper
 {
@@ -27,7 +27,6 @@ class JsonErrorHelper
             }
 
             return match (true) {
-                $throwable instanceof BaseException => static::makeResponse($throwable->getMessage(), $throwable->getCode()),
 
                 $throwable instanceof ValidationException => static::makeResponse('The given data was invalid.', $throwable->status, $throwable->errors()),
 
