@@ -1,0 +1,16 @@
+{
+    "agents": [
+        "claude_code",
+        "codex",
+        "cursor"
+    ],
+    "editors": [
+        "vscode"
+    ],
+    "guidelines" : [
+        "Follow best practices for the PHP programming language.",
+        "Ensure compatibility with Laravel framework version 12.0 and above.",
+        "Adhere to semantic versioning for package dependencies.",
+        "Maintain code readability and proper documentation."
+    ]
+}
