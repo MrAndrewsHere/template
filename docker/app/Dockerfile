@@ -7,13 +7,13 @@ WORKDIR /app
 
 COPY composer.json composer.lock ./
 
-RUN --mount=type=cache,target=/tmp/cache \
-    composer install \
-    --no-interaction \
-    --prefer-dist \
-    --profile \
-    --ansi \
-    2>&1 | tee /var/log/composer-install.log
+# RUN --mount=type=cache,target=/tmp/cache \
+#     composer install \
+#     --no-interaction \
+#     --prefer-dist \
+#     --profile \
+#     --ansi \
+#     2>&1 | tee /var/log/composer-install.log
 
 FROM node:${NODE_VERSION}-alpine AS frontend
 
@@ -43,20 +43,20 @@ RUN apt-get update \
     npm
 
 RUN install-php-extensions \
-    bcmath \
+    # bcmath \
     curl \
-    exif \
-    gd \
+    # exif \
+    # gd \
     intl \
     mbstring \
-    opcache \
+    # opcache \
     pcntl \
     pdo \
     pdo_mysql \
     pdo_pgsql \
-    pgsql \
+    # pgsql \
     redis \
-    xsl \
+    # xsl \
     zip
 
 WORKDIR /var/www/html
@@ -71,8 +71,8 @@ RUN chmod -R 777 storage bootstrap/cache \
 
 RUN git config --global --add safe.directory /var/www/html
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
+# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+#     CMD curl -f http://localhost/health || exit 1
 
 EXPOSE 80
 EXPOSE 5173
