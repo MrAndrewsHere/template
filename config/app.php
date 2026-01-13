@@ -125,4 +125,14 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'enable_cache_headers' => env('ENABLE_CACHE_HEADERS', true),
+
+    'cache_headers_options' => [
+        'public',
+        'max_age='.env('CACHE_HEADERS_MAX_AGE', 30),
+        's_maxage='.env('CACHE_HEADERS_S_MAXAGE', 180),
+        'stale_while_revalidate='.env('CACHE_HEADERS_STALE_WHILE_REVALIDATE', 300),
+        'etag',
+    ],
+
 ];

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Jobs\Test;
+use App\Service\DealService;
+use App\Service\Decorators\CachedDealService;
+use App\Service\Interfaces\DealServiceInterface;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerTelescopeLocally();
+        $this->registerServices();
 
     }
 
@@ -27,8 +30,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::preventLazyLoading(! app()->isProduction());
-        JsonResource::withoutWrapping();
+        // JsonResource::withoutWrapping();
         $this->schedule();
+
+        $this->configureCacheHeaders();
 
     }
 
@@ -50,5 +55,32 @@ class AppServiceProvider extends ServiceProvider
 
         Schedule::command('telescope:prune --hours=72')->daily();
 
+    }
+
+    private function registerServices(): void
+    {
+        $this->app->bind(
+            DealServiceInterface::class,
+            DealService::class,
+        );
+
+        if (config('cache.deals_service.enabled', true)) {
+            $this->app->extend(DealServiceInterface::class, function ($service): CachedDealService {
+                return new CachedDealService($service);
+            });
+        }
+    }
+
+    private function configureCacheHeaders(): void
+    {
+        if (config('app.enable_cache_headers')) {
+            $options = collect(config('app.cache_headers_options', []))->join(';');
+
+            if (! $options) {
+                return;
+            }
+
+            Route::pushMiddlewareToGroup('api', "cache.headers:{$options}");
+        }
     }
 }

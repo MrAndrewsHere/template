@@ -94,6 +94,11 @@ return [
 
     ],
 
+    'deals_service' => [
+        'enabled' => env('ENABLED_DEALS_CACHE_SERVICE', true),
+        'ttl' => env('CACHE_TTL_DEALS', 300),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Cache Key Prefix

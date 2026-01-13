@@ -2,6 +2,9 @@
 
 <h1 align="center"><a href="https://frankenphp.dev"><img src="frankenphp.png" alt="FrankenPHP" width="400"></a></h1>
 
+# Deal Service API
+
+Микросервис для управления сделками товаров. Позволяет создавать, просматривать, обновлять и удалять сделки, привязанные к товарам.
 
 (http://127.0.0.1/)
 
@@ -32,16 +35,51 @@ APP_NAMESPACE=value # value - префикс к сервисам docker-compose
 ```
 3. Инициализация проекта:
 
-Makefile:
 ```bash
 make init
 ```
-Taskfile (https://taskfile.dev/docs/installation#get-the-binary):
+
+## Примеры запросов
+1. Создать сделку
+
 ```bash
-task init
+curl -X POST "http://localhost/api/v1/deals" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product_id": 1,
+    "client_name": "Иван Иванов",
+    "client_phone": "+79991234567",
+    "comment": "Срочный заказ",
+    "status": "new"
+  }'
+  ```
+
+2. Получить сделки по товару
+
+```bash
+curl -X GET "http://localhost/api/v1/deals?product_id=1"
 ```
 
+3. Получить одну сделку
+```bash
+curl -X GET "http://localhost/api/v1/deals/1"
+```
 
+4. Обновить сделку
+```bash
+curl -X PATCH "http://localhost/api/v1/deals/1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "done",
+    "comment": "Доставлен"
+  }'
+```
+
+5. Удалить сделку
+
+```bash
+curl -X DELETE "http://localhost/api/v1/deals/1"
+```
 ## Commonly used tasks
 
 ```bash
