@@ -15,14 +15,6 @@ class LogRequest
     {
         $request->attributes->set('request_start_time', microtime(true));
 
-        return $next($request);
-    }
-
-    public function terminate(Request $request, Response $response): void
-    {
-
-        $startTime = $request->attributes->get('request_start_time', microtime(true));
-
         Log::channel('requests')->info('Request', [
             'route_name' => $request->route()->getName(),
             'method' => $request->method(),
@@ -31,6 +23,14 @@ class LogRequest
             'payload' => $request->all(),
             'headers' => $request->headers->all(),
         ]);
+
+        return $next($request);
+    }
+
+    public function terminate(Request $request, Response $response): void
+    {
+
+        $startTime = $request->attributes->get('request_start_time', microtime(true));
 
         Log::channel('requests')->info('Request terminated', [
             'route_name' => $request->route()->getName(),

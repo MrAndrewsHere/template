@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Share\Exceptions;
+namespace App\Share\Exceptions;
 
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use Log;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -22,6 +22,9 @@ class JsonErrorHelper
     public static function handle(Exceptions $exceptions): void
     {
         $exceptions->render(function (Throwable $throwable): ?JsonResponse {
+
+            Log::error('Exception caught:', ['exception' => $throwable]);
+
             if (! static::wantsJson()) {
                 return null;
             }
@@ -30,7 +33,7 @@ class JsonErrorHelper
 
                 $throwable instanceof ValidationException => static::makeResponse('The given data was invalid.', $throwable->status, $throwable->errors()),
 
-                $throwable instanceof ModelNotFoundException => static::makeResponse('Resource not found.', 404),
+                $throwable instanceof ModelNotFoundException,
 
                 $throwable instanceof NotFoundHttpException => static::makeResponse($throwable->getMessage(), 404),
 
