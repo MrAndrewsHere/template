@@ -1,0 +1,45 @@
+# compose.override.yml — Development overrides (auto-merged by docker compose up)
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/app/Dockerfile
+      target: dev
+    ports:
+      - "80:80"
+      - "2019:2019"
+      - "5173:5173"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      CADDY_ADMIN: 0.0.0.0:2019
+    volumes:
+      - .:/var/www/html
+      - ./docker/supervisor/common.conf:/etc/supervisor/common.conf
+      - ./docker/supervisor/dev.conf:/etc/supervisor/conf.d/supervisord.conf
+      - ./docker/app/php.ini:/usr/local/etc/php/php.ini
+      - ./Caddyfile:/etc/caddy/Caddyfile
+
+  db:
+    ports:
+      - "${DB_PORT:-5432}:5432"
+
+  redis:
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8025/readyz"]
+      interval: 15s
+      timeout: 5s
+      retries: 2
+      start_period: 5s
+    networks:
+      - backend
+    profiles: [dev]
