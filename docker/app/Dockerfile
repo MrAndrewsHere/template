@@ -2,9 +2,9 @@ ARG PHP_VERSION=8.3
 ARG NODE_VERSION=22
 
 # --- Stage: composer dependencies ---
-FROM composer:2 AS vendor
+FROM dunglas/frankenphp:1.0-php${PHP_VERSION} AS vendor
 
-COPY --from=dunglas/frankenphp:1.0-php${PHP_VERSION} /usr/local/bin/php /usr/local/bin/php
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 WORKDIR /app
 
