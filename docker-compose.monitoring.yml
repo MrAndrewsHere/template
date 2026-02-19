@@ -45,6 +45,7 @@ services:
     container_name: postgres-exporter
     networks:
       - monitoring
+      - site_network
     environment:
       - DATA_SOURCE_NAME=postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/${DB_DATABASE}?sslmode=disable
     ports:
@@ -52,12 +53,12 @@ services:
     depends_on:
       - db
 
-  # Экспортер для Redis
   redis-exporter:
     image: oliver006/redis_exporter:latest
     container_name: redis-exporter
     networks:
       - monitoring
+      - site_network
     environment:
       - REDIS_ADDR=redis://redis:6379
     ports:

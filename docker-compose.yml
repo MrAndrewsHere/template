@@ -32,7 +32,7 @@ services:
             - ./Caddyfile:/etc/caddy/Caddyfile
 
         healthcheck:
-            test: [ "CMD", "curl", "-f", "http://localhost" ]
+            test: [ "CMD", "curl", "-f", "http://localhost/up" ]
             interval: 3s
             timeout: 3s
             retries: 3
@@ -49,6 +49,7 @@ services:
         restart: unless-stopped
         volumes:
             - postgres_data:/var/lib/postgresql/data
+            - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
         environment:
             POSTGRES_DB: ${DB_DATABASE}
             POSTGRES_USER: ${DB_USERNAME}
