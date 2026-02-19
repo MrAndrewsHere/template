@@ -2,20 +2,22 @@
 version: '3'
 dotenv: [ '.env' ]
 
+vars:
+  ENV: '{{.ENV | default "dev"}}'
+
 env:
   CONTAINER: '{{.APP_NAMESPACE}}-app'
   DOCKER_TTY: '-it'
-  COMPOSE: 'docker-compose'
 
 tasks:
-  # === Внутренние утилитарные задачи (для переиспользования) ===
+  # === Internal helpers ===
   compose:
     internal: true
     vars:
       FILES: '{{.FILES | default ""}}'
       ARGS: '{{.ARGS | default ""}}'
     cmds:
-      - $COMPOSE {{.FILES}} {{.ARGS}}
+      - docker compose {{.FILES}} {{.ARGS}}
 
   artisan:
     internal: true
@@ -32,271 +34,234 @@ tasks:
     cmds:
       - docker exec $DOCKER_TTY $CONTAINER {{.BIN}} {{.ARGS}}
 
+  compose-files:
+    internal: true
+    vars:
+      ACTION: '{{.ACTION}}'
+    cmds:
+      - task: compose
+        vars:
+          FILES: '{{if eq .ENV "prod"}}-f docker-compose.yml -f docker-compose.prod.yml{{end}}'
+          ARGS: '{{.ACTION}}'
+
   # === Compose / Orchestration ===
-  compose:build:
-    desc: Build и поднятие сервисов
+  build:
+    desc: Build and start containers (use ENV=prod for production)
     cmds:
-      - task: compose
-        vars: { ARGS: 'up -d --build' }
+      - task: compose-files
+        vars: { ACTION: 'up -d --build' }
 
-  compose:up:
-    desc: Поднять сервисы
+  up:
+    desc: Start containers
     cmds:
-      - task: compose
-        vars: { ARGS: 'up -d --remove-orphans' }
+      - task: compose-files
+        vars: { ACTION: 'up -d --remove-orphans' }
 
-  compose:build-prod:
-    desc: Build и поднятие сервисов (prod)
-    cmds:
-      - task: compose
-        vars:
-          FILES: '-f docker-compose.yml -f docker-compose.prod.yml'
-          ARGS: 'up -d --build'
-
-  compose:up-prod:
-    desc: Поднять сервисы (prod)
-    cmds:
-      - task: compose
-        vars:
-          FILES: '-f docker-compose.yml -f docker-compose.prod.yml'
-          ARGS: 'up -d --remove-orphans'
-
-  compose:restart:
-    desc: Рестарт сервисов
+  restart:
+    desc: Restart all containers
     cmds:
       - task: compose
         vars: { ARGS: 'restart' }
 
-  compose:stop:
-    desc: Остановить сервисы
+  stop:
+    desc: Stop all containers
     cmds:
       - task: compose
         vars: { ARGS: 'stop' }
 
-  compose:down:
-    desc: Остановить и удалить сервисы (с данными)
+  down:
+    desc: Stop and remove containers and volumes
     cmds:
       - task: compose
         vars: { ARGS: 'down -v' }
 
+  logs:
+    desc: Tail container logs
+    cmds:
+      - task: compose
+        vars: { ARGS: 'logs -f --tail=100' }
+
+  ps:
+    desc: Show running containers
+    cmds:
+      - task: compose
+        vars: { ARGS: 'ps' }
+
   # === App / Container ===
-  app:shell:
-    desc: Открыть bash внутри контейнера приложения
+  shell:
+    desc: Open bash inside the app container
     cmds:
       - docker exec $DOCKER_TTY $CONTAINER /bin/bash
 
-  app:composer-install:
-    desc: Установка PHP-зависимостей в контейнере
+  composer-install:
+    desc: Install PHP dependencies
     cmds:
       - docker exec $DOCKER_TTY $CONTAINER composer install --no-interaction --prefer-dist --no-progress
 
-  app:key-generate:
-    desc: Генерация APP_KEY
+  npm-install:
+    desc: Install Node dependencies
+    cmds:
+      - docker exec $DOCKER_TTY $CONTAINER npm ci
+
+  key-generate:
+    desc: Generate APP_KEY
     cmds:
       - task: artisan
         vars: { ARGS: 'key:generate' }
 
-  app:storage-link:
-    desc: Создание storage символической ссылки
+  storage-link:
+    desc: Create storage symlink
     cmds:
       - task: artisan
         vars: { ARGS: 'storage:link' }
 
-  app:cache-clear:
-    desc: Очистка кэша приложения
+  cache-clear:
+    desc: Clear application caches
     cmds:
       - task: artisan
         vars: { ARGS: 'cache:clear' }
 
-  app:horizon-install:
-    desc: Установка Horizon
+  optimize:
+    desc: Cache config/routes/views (prod)
     cmds:
       - task: artisan
-        vars: { ARGS: 'horizon:install' }
+        vars: { ARGS: 'optimize' }
+
+  optimize-clear:
+    desc: Clear cached config/routes/views
+    cmds:
+      - task: artisan
+        vars: { ARGS: 'optimize:clear' }
 
   # === Database ===
-  db:migrate:
-    desc: Применить миграции
+  migrate:
+    desc: Run database migrations
     cmds:
       - task: artisan
         vars: { ARGS: 'migrate' }
 
-  db:seed:
-    desc: Наполнить БД сидерами
+  migrate-fresh:
+    desc: Drop all tables and re-run migrations
+    cmds:
+      - task: artisan
+        vars: { ARGS: 'migrate:fresh' }
+
+  seed:
+    desc: Run database seeders
     cmds:
       - task: artisan
         vars: { ARGS: 'db:seed' }
 
-  db:setup:
-    desc: Полная инициализация БД (миграции + сиды)
+  db-setup:
+    desc: Migrate + seed
     cmds:
-      - task: db:migrate
-      - task: db:seed
+      - task: migrate
+      - task: seed
+
+  db-fresh:
+    desc: Fresh migrate + seed
+    cmds:
+      - task: migrate-fresh
+      - task: seed
 
   # === Quality / CI ===
-  quality:pint:fix:
-    desc: Авто-правка кода Pint
+  pint:
+    desc: Fix code style (Pint)
     cmds:
       - task: vendor-bin
         vars:
           BIN: 'vendor/bin/pint'
           ARGS: '--config ./pint.json'
 
-  quality:pint:check:
-    desc: Проверка Pint без правок
+  pint-check:
+    desc: Check code style without fixing
     cmds:
       - task: vendor-bin
         vars:
           BIN: 'vendor/bin/pint'
           ARGS: '--test --config ./pint.json'
 
-  quality:rector:
-    desc: Прогон Rector
+  rector:
+    desc: Run Rector refactoring
     cmds:
       - task: vendor-bin
         vars:
           BIN: 'vendor/bin/rector'
           ARGS: 'process'
 
-  quality:insights:
-    desc: Прогон PHP Insights
+  rector-dry:
+    desc: Rector dry-run
+    cmds:
+      - task: vendor-bin
+        vars:
+          BIN: 'vendor/bin/rector'
+          ARGS: 'process --dry-run'
+
+  insights:
+    desc: Run PHP Insights
     cmds:
       - task: vendor-bin
         vars:
           BIN: 'vendor/bin/phpinsights'
-          ARGS: '--quiet'
+          ARGS: '--summary'
 
-  quality:stan:
-    desc: Прогон PHPStan
+  stan:
+    desc: Run PHPStan static analysis
     cmds:
       - task: vendor-bin
         vars:
           BIN: 'vendor/bin/phpstan'
           ARGS: 'analyse -c ./phpstan.neon'
 
-  quality:test:
-    desc: Запуск тестов
+  test:
+    desc: Run tests in parallel
     cmds:
-      - task: app:cache-clear
       - task: artisan
         vars: { ARGS: 'test --env=testing --parallel' }
 
-  quality:all:
-    desc: Полная проверка качества кода
-    cmds:
-      - task: quality:pint:check
-      - task: quality:rector
-      - task: quality:test
-      - task: quality:insights
-      - task: quality:stan
-
-  # === Композитные / Сценарные задачи ===
-  init:
-    desc: Полная инициализация проекта
-    cmds:
-      - task: compose:build
-      - task: app:composer-install
-      - task: app:key-generate
-      - task: app:storage-link
-      - task: app:horizon-install
-      - task: db:setup
-      - task: compose:stop
-      - task: compose:up
-      - task: quality:all
-
-  # === Утилиты ===
-  echo:
-    desc: Печать текущих значений окружения
-    cmds:
-      - echo $APP_NAMESPACE
-      - echo $CONTAINER
-
-  tink:
-    desc: Открыть Tinker (интерактивно)
-    cmds:
-      - docker exec -it $CONTAINER php artisan tink
-
-  # === Совместимость со старыми именами задач (алиасы) ===
-  exec:
-    cmds:
-      - task: app:shell
-
   check:
+    desc: Run all quality checks (no mutations)
     cmds:
-      - task: quality:all
+      - task: pint-check
+      - task: rector-dry
+      - task: stan
+      - task: test
+      - task: insights
 
-  build:
+  # === Utilities ===
+  tinker:
+    desc: Open Laravel Tinker
     cmds:
-      - task: compose:build
+      - docker exec -it $CONTAINER php artisan tinker
 
-  up:
+  swagger:
+    desc: Generate Swagger/OpenAPI docs
     cmds:
-      - task: compose:up
+      - task: artisan
+        vars: { ARGS: 'l5-swagger:generate' }
 
-  build-prod:
+  horizon:
+    desc: Horizon status
     cmds:
-      - task: compose:build-prod
+      - task: artisan
+        vars: { ARGS: 'horizon:status' }
 
-  up-prod:
+  # === Composite scenarios ===
+  init:
+    desc: Full project init (dev)
     cmds:
-      - task: compose:up-prod
+      - task: build
+      - task: composer-install
+      - task: npm-install
+      - task: key-generate
+      - task: storage-link
+      - task: db-setup
+      - echo "--- Init complete. Run 'task up' to start. ---"
 
-  restart:
+  deploy:
+    desc: Deploy-like sequence for prod
     cmds:
-      - task: compose:restart
-
-  stop:
-    cmds:
-      - task: compose:stop
-
-  down:
-    cmds:
-      - task: compose:down
-
-  composer-install:
-    cmds:
-      - task: app:composer-install
-
-  key-generate:
-    cmds:
-      - task: app:key-generate
-
-  storage-link:
-    cmds:
-      - task: app:storage-link
-
-  db-migrate:
-    cmds:
-      - task: db:migrate
-
-  db-seed:
-    cmds:
-      - task: db:seed
-
-  cache-clear:
-    cmds:
-      - task: app:cache-clear
-
-  pint:
-    cmds:
-      - task: quality:pint:fix
-
-  pint-test:
-    cmds:
-      - task: quality:pint:check
-
-  rector:
-    cmds:
-      - task: quality:rector
-
-  insights:
-    cmds:
-      - task: quality:insights
-
-  stan:
-    cmds:
-      - task: quality:stan
-
-  test:
-    cmds:
-      - task: quality:test
+      - task: build
+        vars: { ENV: 'prod' }
+      - task: migrate
+      - task: optimize
