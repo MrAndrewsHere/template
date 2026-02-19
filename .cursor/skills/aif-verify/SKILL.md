@@ -1,9 +1,6 @@
 ---
 name: aif-verify
-description: >-
-  Verify completed implementation against the plan. Checks that all tasks were fully implemented,
-  nothing was forgotten, code compiles, tests pass, and quality standards are met.
-  Use after "/aif-implement" completes, or when user says "verify", "check work", "did we miss anything".
+description: Verify completed implementation against the plan. Checks that all tasks were fully implemented, nothing was forgotten, code compiles, tests pass, and quality standards are met. Use after "/aif-implement" completes, or when user says "verify", "check work", "did we miss anything".
 argument-hint: "[--strict]"
 allowed-tools: Read Edit Glob Grep Bash(git *) Bash(npm *) Bash(npx *) Bash(yarn *) Bash(pnpm *) Bash(bun *) Bash(go *) Bash(python *) Bash(php *) Bash(composer *) Bash(cargo *) Bash(make *) Bash(task *) Bash(just *) Bash(mage *) TaskList TaskGet AskUserQuestion Questions
 disable-model-invocation: true
