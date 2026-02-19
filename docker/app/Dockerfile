@@ -4,6 +4,8 @@ ARG NODE_VERSION=22
 # --- Stage: composer dependencies ---
 FROM composer:2 AS vendor
 
+COPY --from=dunglas/frankenphp:1.0-php${PHP_VERSION} /usr/local/bin/php /usr/local/bin/php
+
 WORKDIR /app
 
 COPY composer.json composer.lock ./
@@ -13,7 +15,8 @@ RUN --mount=type=cache,target=/tmp/cache \
     --no-interaction \
     --no-scripts \
     --no-dev \
-    --prefer-dist
+    --prefer-dist \
+    --ignore-platform-reqs
 
 # --- Stage: frontend build ---
 FROM node:${NODE_VERSION}-alpine AS frontend
