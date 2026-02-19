@@ -2,6 +2,7 @@ x-app: &x-app
     build:
         context: .
         dockerfile: ./docker/app/Dockerfile
+        target: dev
     env_file:
         - .env
     container_name: ${APP_NAMESPACE}-app
@@ -41,11 +42,13 @@ services:
             redis:
                 condition: service_healthy
     db:
-        image: postgres:latest
+        image: postgres:16-alpine
         env_file:
             - .env
         container_name: ${APP_NAMESPACE}-db
         restart: unless-stopped
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
         environment:
             POSTGRES_DB: ${DB_DATABASE}
             POSTGRES_USER: ${DB_USERNAME}
@@ -60,7 +63,7 @@ services:
 
 
     redis:
-        image: redis:latest
+        image: redis:7-alpine
         container_name: ${APP_NAMESPACE}-redis
         restart: unless-stopped
         ports:
