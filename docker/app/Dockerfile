@@ -6,6 +6,10 @@ ARG NODE_VERSION=22
 # --- Stage: composer dependencies ---
 FROM dunglas/frankenphp:1.11-php${PHP_VERSION} AS vendor
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends unzip \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 WORKDIR /app
@@ -79,7 +83,7 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=vendor /usr/bin/composer /usr/local/bin/composer
+COPY --from=vendor /usr/local/bin/composer /usr/local/bin/composer
 
 EXPOSE 80
 EXPOSE 5173
@@ -89,7 +93,7 @@ CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.con
 # --- Stage: prod target ---
 FROM base AS prod
 
-COPY --from=vendor /usr/bin/composer /usr/local/bin/composer
+COPY --from=vendor /usr/local/bin/composer /usr/local/bin/composer
 COPY --from=vendor /app/vendor ./vendor/
 COPY --from=frontend /app/public/build ./public/build/
 COPY . .

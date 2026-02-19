@@ -17,8 +17,8 @@
 
 # Docker (prevent recursive copy)
 Dockerfile*
-docker-compose*
-compose*
+docker-compose*.yml
+compose*.yml
 .dockerignore
 
 # Dependencies (rebuilt in container)
