@@ -1,40 +1,44 @@
+# --- Makefile for Laravel + FrankenPHP ---
+
+SHELL := bash
+.ONESHELL:
+.SHELLFLAGS := -eu -o pipefail -c
+.DELETE_ON_ERROR:
+MAKEFLAGS += --warn-undefined-variables
+MAKEFLAGS += --no-builtin-rules
+
 ifneq (,$(wildcard .env))
 include .env
 export
 endif
 
-SHELL := bash
+# --- Git ---
+VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT     ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_TIME := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
+
+# --- Docker ---
+COMPOSE      := docker compose
+COMPOSE_PROD := docker compose -f compose.yml -f compose.production.yml
+EXEC         := $(COMPOSE) exec app
+ARTISAN      := $(EXEC) php artisan
+
+# ===================================================================
 .DEFAULT_GOAL := help
 
-# --- Environment -----------------------------------------------------------
-# Usage:  make up ENV=prod
-#         make build  (defaults to dev)
-ENV ?= dev
+##@ Development
 
-APP_NAMESPACE ?= $(APP_NAMESPACE)
-CONTAINER     ?= $(APP_NAMESPACE)-app
-DOCKER_TTY    ?= -it
-
-ifeq ($(ENV),prod)
-COMPOSE_FILES := -f docker-compose.yml -f docker-compose.prod.yml
-else
-COMPOSE_FILES :=
-endif
-
-COMPOSE    := docker compose $(COMPOSE_FILES)
-DOCKER_EXEC := docker exec $(DOCKER_TTY) $(CONTAINER)
-ARTISAN     := $(DOCKER_EXEC) php artisan
-
-# ===================================================================
-# Compose / Orchestration
-# ===================================================================
-.PHONY: build
-build: ## Build and start containers (respects ENV)
-	$(COMPOSE) up -d --build
+.PHONY: dev
+dev: ## Start dev environment (foreground with logs)
+	$(COMPOSE) up
 
 .PHONY: up
-up: ## Start containers (respects ENV)
+up: ## Start containers in background
 	$(COMPOSE) up -d --remove-orphans
+
+.PHONY: build
+build: ## Build and start containers
+	$(COMPOSE) up -d --build
 
 .PHONY: restart
 restart: ## Restart all containers
@@ -56,20 +60,23 @@ logs: ## Tail container logs (all services)
 ps: ## Show running containers
 	$(COMPOSE) ps
 
-# ===================================================================
-# App / Container
-# ===================================================================
+.PHONY: infra
+infra: ## Start only infrastructure (db, redis)
+	$(COMPOSE) up -d db redis
+
+##@ Application
+
 .PHONY: shell
 shell: ## Open bash inside the app container
-	$(DOCKER_EXEC) /bin/bash
+	$(EXEC) /bin/bash
 
 .PHONY: composer-install
 composer-install: ## Install PHP dependencies
-	$(DOCKER_EXEC) composer install --no-interaction --prefer-dist --no-progress
+	$(EXEC) composer install --no-interaction --prefer-dist --no-progress
 
 .PHONY: npm-install
 npm-install: ## Install Node dependencies
-	$(DOCKER_EXEC) npm ci
+	$(EXEC) npm ci
 
 .PHONY: key-generate
 key-generate: ## Generate APP_KEY
@@ -91,9 +98,8 @@ optimize: ## Cache config/routes/views (for prod)
 optimize-clear: ## Clear cached config/routes/views
 	$(ARTISAN) optimize:clear
 
-# ===================================================================
-# Database
-# ===================================================================
+##@ Database
+
 .PHONY: migrate
 migrate: ## Run database migrations
 	$(ARTISAN) migrate
@@ -112,74 +118,114 @@ db-setup: migrate seed ## Migrate + seed
 .PHONY: db-fresh
 db-fresh: migrate-fresh seed ## Fresh migrate + seed
 
-# ===================================================================
-# Quality / CI
-# ===================================================================
-.PHONY: pint
-pint: ## Fix code style (Pint)
-	$(DOCKER_EXEC) vendor/bin/pint --config ./pint.json
+##@ Quality / CI
 
-.PHONY: pint-check
-pint-check: ## Check code style without fixing
-	$(DOCKER_EXEC) vendor/bin/pint --test --config ./pint.json
+.PHONY: fmt
+fmt: ## Fix code style (Pint)
+	$(EXEC) vendor/bin/pint --config ./pint.json
+
+.PHONY: lint
+lint: ## Check code style without fixing (Pint)
+	$(EXEC) vendor/bin/pint --test --config ./pint.json
 
 .PHONY: rector
 rector: ## Run Rector refactoring
-	$(DOCKER_EXEC) vendor/bin/rector process
+	$(EXEC) vendor/bin/rector process
 
 .PHONY: rector-dry
 rector-dry: ## Rector dry-run
-	$(DOCKER_EXEC) vendor/bin/rector process --dry-run
+	$(EXEC) vendor/bin/rector process --dry-run
 
 .PHONY: insights
 insights: ## Run PHP Insights
-	$(DOCKER_EXEC) vendor/bin/phpinsights --summary
+	$(EXEC) vendor/bin/phpinsights --summary
 
 .PHONY: stan
 stan: ## Run PHPStan static analysis
-	$(DOCKER_EXEC) vendor/bin/phpstan analyse -c ./phpstan.neon
+	$(EXEC) vendor/bin/phpstan analyse -c ./phpstan.neon
 
 .PHONY: test
 test: ## Run tests in parallel
 	$(ARTISAN) test --env=testing --parallel
 
 .PHONY: check
-check: pint-check rector-dry stan test insights ## Run all quality checks (no mutations)
+check: lint rector-dry stan test insights ## Run all quality checks
 
-# ===================================================================
-# Utilities
-# ===================================================================
+.PHONY: ci
+ci: composer-install lint rector-dry stan test ## Full CI pipeline
+
+##@ Docker — Production
+
+.PHONY: prod-build
+prod-build: ## Build production image
+	$(COMPOSE_PROD) build
+
+.PHONY: prod-up
+prod-up: ## Start production environment
+	$(COMPOSE_PROD) up -d
+
+.PHONY: prod-down
+prod-down: ## Stop production environment
+	$(COMPOSE_PROD) down
+
+.PHONY: prod-logs
+prod-logs: ## Tail production logs
+	$(COMPOSE_PROD) logs -f --tail=100
+
+.PHONY: prod-ps
+prod-ps: ## Show production containers
+	$(COMPOSE_PROD) ps
+
+##@ Deploy
+
+.PHONY: deploy
+deploy: ## Run production deployment
+	./deploy/scripts/deploy.sh
+
+.PHONY: deploy-update
+deploy-update: ## Run zero-downtime update
+	./deploy/scripts/update.sh
+
+.PHONY: deploy-rollback
+deploy-rollback: ## Rollback to previous version
+	./deploy/scripts/rollback.sh
+
+.PHONY: deploy-health
+deploy-health: ## Run production health check
+	./deploy/scripts/health-check.sh
+
+.PHONY: deploy-backup
+deploy-backup: ## Backup production database
+	./deploy/scripts/backup.sh
+
+##@ Utilities
+
 .PHONY: tinker
 tinker: ## Open Laravel Tinker
-	$(DOCKER_EXEC) php artisan tinker
+	$(ARTISAN) tinker
 
 .PHONY: swagger
 swagger: ## Generate Swagger/OpenAPI docs
 	$(ARTISAN) l5-swagger:generate
 
 .PHONY: horizon
-horizon: ## Open Horizon status
+horizon: ## Show Horizon status
 	$(ARTISAN) horizon:status
 
-# ===================================================================
-# Composite scenarios
-# ===================================================================
+##@ Composite
+
 .PHONY: init
-init: build composer-install npm-install key-generate storage-link db-setup ## Full project init (dev)
-	@echo "--- Init complete. Run 'make up' to start. ---"
+init: build composer-install npm-install key-generate storage-link db-setup ## Full project init
+	@echo "--- Init complete. Run 'make dev' to start. ---"
 
-.PHONY: deploy
-deploy: ## Deploy-like sequence for prod
-	$(MAKE) build ENV=prod
-	$(MAKE) migrate
-	$(MAKE) optimize
+.PHONY: clean
+clean: ## Remove generated files and caches
+	rm -rf public/build public/hot coverage/
 
-# ===================================================================
-# Help
-# ===================================================================
+##@ Help
+
 .PHONY: help
 help: ## Show this help
-	@printf "\nUsage:  make <target> [ENV=dev|prod]\n\n"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	@printf "\nCurrent: ENV=$(ENV)  CONTAINER=$(CONTAINER)\n\n"
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make \033[36m<target>\033[0m\n"} \
+		/^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2} \
+		/^##@/ {printf "\n\033[1m%s\033[0m\n", substr($$0, 5)}' $(MAKEFILE_LIST)

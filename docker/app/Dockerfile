@@ -1,8 +1,10 @@
+# syntax=docker/dockerfile:1
+
 ARG PHP_VERSION=8.3
 ARG NODE_VERSION=22
 
 # --- Stage: composer dependencies ---
-FROM dunglas/frankenphp:1.0-php${PHP_VERSION} AS vendor
+FROM dunglas/frankenphp:1.11-php${PHP_VERSION} AS vendor
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
@@ -31,7 +33,7 @@ RUN --mount=type=cache,target=/root/.npm \
     npm ci --quiet && npm run build
 
 # --- Stage: base PHP image ---
-FROM dunglas/frankenphp:1.0-php${PHP_VERSION} AS base
+FROM dunglas/frankenphp:1.11-php${PHP_VERSION} AS base
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -93,7 +95,11 @@ COPY --from=frontend /app/public/build ./public/build/
 COPY . .
 
 RUN composer dump-autoload --optimize --no-dev \
-    && rm -f /usr/local/bin/composer
+    && rm -f /usr/local/bin/composer \
+    && cp docker/supervisor/common.conf /etc/supervisor/common.conf \
+    && cp docker/supervisor/prod.conf /etc/supervisor/conf.d/supervisord.conf \
+    && cp docker/app/php.ini /usr/local/etc/php/php.ini \
+    && cp Caddyfile /etc/caddy/Caddyfile
 
 RUN chmod -R 775 storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
